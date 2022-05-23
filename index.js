@@ -8,14 +8,22 @@ const io = new Server(server);
 
 let clients = []
 const addClient = id => {
-  if (clients.indexOf(id) < 0) {
-    clients.push(id)
+  if (clients.indexOf(item => item.id == id) < 0) {
+    clients.push({ id, name: null })
   }
   return clients
 }
 const delClient = id => {
-  clients = clients.filter(_ => _ != id)
+  clients = clients.filter(item => item.id != id)
   return clients
+}
+
+const setName = ({ id, name }) => {
+  console.log('setName', { id, name }, clients)
+  const _ = clients.find(item => item.id == id)
+  if (_) {
+    _.name = name
+  }
 }
 
 app.get("/channel", (req, res) => {
@@ -29,17 +37,25 @@ app.use(express.static(path.join(__dirname, "channel")));
 io.on("connection", (socket) => {
   console.log("a user connected: socket.id", socket.id);
   socket.broadcast.emit("hi");
-  io.emit("socket.id", addClient(socket.id));
+  io.emit("socket.id", addClient(socket.id))
+  // io.emit("socket.id", addClient(socket.id));
 
   socket.on("disconnect", () => {
     io.emit("socket.id", delClient(socket.id));
     console.log("user disconnected", socket.id);
   });
 
+  socket.on("setName", (name) => {
+    setName({ id: socket.id, name })
+    io.emit("socket.id", clients);
+    // io.emit("chat message", msg);
+  });
+
   socket.on("chat message", (msg) => {
     console.log("message: " + msg);
     io.emit("chat message", msg);
   });
+
   socket.on("call-user", (data) => {
     socket.to(data.to).emit("call-made", {
       offer: data.offer,

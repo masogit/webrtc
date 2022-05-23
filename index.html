@@ -11,25 +11,30 @@
         Helvetica, Arial, sans-serif;
     }
 
+    .videos {
+      display: flex;
+      align-items: flex-start;
+    }
+
     #local-video {
       width: 30%;
-      position: fixed;
-      top: 0;
-      right: 0;
+      /* position: fixed;
+      top: 50px;
+      right: 0; */
     }
 
     #remote-video {
-      width: 100%;
+      width: 70%;
     }
 
     #form {
-      visibility: hidden;
+      /* visibility: hidden; */
       background: rgba(0, 0, 0, 0.15);
       padding: 0.25rem;
-      position: fixed;
-      bottom: 0;
+      /* position: fixed;
+      top: 0;
       left: 0;
-      right: 0;
+      right: 0; */
       display: flex;
       height: 3rem;
       box-sizing: border-box;
@@ -78,21 +83,21 @@
 </head>
 
 <body>
-  <ul id="messages"></ul>
   <form id="form" action="">
-    <input id="input" autocomplete="off" /><button>Send</button>
+    <input id="input" autocomplete="off" placeholder="Input your name"/><button>Connect</button>
   </form>
-  <video autoplay muted playsinline id="remote-video"></video>
-  <video autoplay muted playsinline id="local-video"></video>
+  <ul id="messages"></ul>
+  <div class="videos">
+    <video autoplay playsinline id="remote-video"></video>
+    <video autoplay muted playsinline id="local-video"></video>
+  </div>
 </body>
 <script>
   const { RTCPeerConnection, RTCSessionDescription } = window;
   const peerConnection = new RTCPeerConnection();
-  const peerConnection2 = new RTCPeerConnection();
   let isAlreadyCalling = false;
   let getCalled = false;
   var socket = io();
-  // .connect('192.168.31.124:3000');
   var messages = document.getElementById("messages");
   var form = document.getElementById("form");
   var input = document.getElementById("input");
@@ -100,8 +105,9 @@
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     if (input.value) {
-      socket.emit("chat message", `call... ${input.value}`);
-      callUser(input.value);
+      socket.emit("setName", input.value)
+      // socket.emit("chat message", `call... ${input.value}`);
+      // callUser(input.value);
       input.value = "";
     }
   });
@@ -114,23 +120,23 @@
     messages.appendChild(item);
     window.scrollTo(0, document.body.scrollHeight);
   });
-  socket.on("socket.id", (msgs) => {
+  socket.on("socket.id", (clients) => {
     messages.innerHTML = ''
-    Array.isArray(msgs) && msgs.forEach(msg => {
+    Array.isArray(clients) && clients.forEach(({ id, name }) => {
       var item = document.createElement("li");
-      item.textContent = msg;
-      if (msg != socket.id) {
+      item.textContent = name;
+      if (id != socket.id) {
         const button = document.createElement("button");
         button.style = "margin-left: 5px";
         button.innerText = "CALL";
-        button.onclick = () => callUser(msg);
+        button.onclick = () => callUser(id);
         item.appendChild(button);
       } else {
         const span = document.createElement("b");
-        span.innerText = " <Self>";
+        span.innerText = " <本机>";
         item.appendChild(span);
       }
-      messages.appendChild(item);
+      name && messages.appendChild(item);
     })
 
     window.scrollTo(0, document.body.scrollHeight);

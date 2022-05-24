@@ -2,230 +2,230 @@
 <html>
 
 <head>
-  <title>Socket.IO chat</title>
-  <style>
-    body {
-      margin: 0;
-      padding-bottom: 3rem;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        Helvetica, Arial, sans-serif;
-    }
+    <title>Socket.IO chat</title>
+    <style>
+        body {
+            margin: 0;
+            padding-bottom: 3rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                Helvetica, Arial, sans-serif;
+        }
 
-    .medias {
-      visibility: hidden;
-      display: flex;
-      align-items: flex-start;
-    }
+        .medias {
+            visibility: hidden;
+            display: flex;
+            align-items: flex-start;
+        }
 
-    #local-video {
-      width: 30%;
-      /* position: fixed;
+        #local-video {
+            width: 30%;
+            /* position: fixed;
       top: 50px;
       right: 0; */
-    }
+        }
 
-    #remote-video {
-      width: 70%;
-    }
+        #remote-video {
+            width: 70%;
+        }
 
-    #form {
-      /* visibility: hidden; */
-      background: rgba(0, 0, 0, 0.15);
-      padding: 0.25rem;
-      /* position: fixed;
+        #form {
+            /* visibility: hidden; */
+            background: rgba(0, 0, 0, 0.15);
+            padding: 0.25rem;
+            /* position: fixed;
       top: 0;
       left: 0;
       right: 0; */
-      display: flex;
-      height: 3rem;
-      box-sizing: border-box;
-      backdrop-filter: blur(10px);
-    }
+            display: flex;
+            height: 3rem;
+            box-sizing: border-box;
+            backdrop-filter: blur(10px);
+        }
 
-    #input {
-      border: none;
-      padding: 0 1rem;
-      flex-grow: 1;
-      border-radius: 2rem;
-      margin: 0.25rem;
-    }
+        #input {
+            border: none;
+            padding: 0 1rem;
+            flex-grow: 1;
+            border-radius: 2rem;
+            margin: 0.25rem;
+        }
 
-    #input:focus {
-      outline: none;
-    }
+        #input:focus {
+            outline: none;
+        }
 
-    #form>button {
-      background: #333;
-      border: none;
-      padding: 0 1rem;
-      margin: 0.25rem;
-      border-radius: 3px;
-      outline: none;
-      color: #fff;
-    }
+        #form>button {
+            background: #333;
+            border: none;
+            padding: 0 1rem;
+            margin: 0.25rem;
+            border-radius: 3px;
+            outline: none;
+            color: #fff;
+        }
 
-    #messages {
-      list-style-type: none;
-      margin: 0;
-      padding: 0;
-    }
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
 
-    #messages>li {
-      padding: 0.5rem 1rem;
-    }
+        #messages>li {
+            padding: 0.5rem 1rem;
+        }
 
-    #messages>li:nth-child(odd) {
-      background: #efefef;
-    }
-  </style>
-  <script src="/socket.io/socket.io.js"></script>
-  <meta name="viewport" content="width=device-width, viewport-fit=cover, initial-scale=1.0, user-scalable=no">
-  <meta name="mobile-web-app-capable" content="yes">
+        #messages>li:nth-child(odd) {
+            background: #efefef;
+        }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+    <meta name="viewport" content="width=device-width, viewport-fit=cover, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
 </head>
 
 <body>
-  <form id="form" action="">
-    <input id="input" autocomplete="off" placeholder="Input your name" /><button>Connect</button>
-  </form>
-  <ul id="messages"></ul>
-  <div class="medias">
-    <video autoplay playsinline id="remote-video"></video>
-    <video autoplay muted playsinline id="local-video"></video>
-    <audio autoplay playsinline id="remote-audio"></audio>
-  </div>
+    <form id="form" action="">
+        <input id="input" autocomplete="off" placeholder="Input your name" /><button>Connect</button>
+    </form>
+    <ul id="messages"></ul>
+    <div class="medias">
+        <video autoplay playsinline id="remote-video"></video>
+        <video autoplay muted playsinline id="local-video"></video>
+        <audio autoplay playsinline id="remote-audio"></audio>
+    </div>
 </body>
 <script>
-  const configuration = { 'iceServers': [{ 'urls': 'stun:stun.qq.com:3478' }] }
-  const { RTCPeerConnection, RTCSessionDescription } = window;
-  const peerConnection = new RTCPeerConnection(configuration);
-  let isAlreadyCalling = false;
-  let getCalled = false;
-  var socket = io();
-  var messages = document.getElementById("messages");
-  var form = document.getElementById("form");
-  var input = document.getElementById("input");
+    const configuration = { 'iceServers': [{ 'urls': 'stun:stun.qq.com:3478' }] }
+    const { RTCPeerConnection, RTCSessionDescription } = window;
+    const peerConnection = new RTCPeerConnection(configuration);
+    let isAlreadyCalling = false;
+    let getCalled = false;
+    var socket = io();
+    var messages = document.getElementById("messages");
+    var form = document.getElementById("form");
+    var input = document.getElementById("input");
 
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-    if (input.value) {
-      socket.emit("setName", input.value)
-      const medias = document.getElementsByClassName('medias')[0]
-      medias.style.visibility = 'visible'
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (input.value) {
+            socket.emit("setName", input.value)
+            const medias = document.getElementsByClassName('medias')[0]
+            medias.style.visibility = 'visible'
+        }
+    });
+    socket.on("connection", (p) => {
+        console.log("connection", p);
+    });
+    socket.on("chat message", function (msg) {
+        var item = document.createElement("li");
+        item.textContent = msg;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+    });
+    socket.on("socket.id", (clients) => {
+        messages.innerHTML = ''
+        Array.isArray(clients) && clients.forEach(({ id, name }) => {
+            var item = document.createElement("li");
+            item.textContent = name;
+            if (id != socket.id) {
+                const button = document.createElement("button");
+                button.style = "margin-left: 5px";
+                button.innerText = "CALL";
+                button.onclick = () => callUser(id);
+                item.appendChild(button);
+            } else {
+                const span = document.createElement("b");
+                span.innerText = " <本机>";
+                item.appendChild(span);
+            }
+            name && messages.appendChild(item);
+        })
+
+        window.scrollTo(0, document.body.scrollHeight);
+    });
+
+    /**
+     * 建立连接
+     */
+
+    async function callUser(socketId) {
+        //   isAlreadyCalling = true;
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(
+            new RTCSessionDescription(offer)
+        );
+        console.log("callUser", {
+            offer,
+            from: socket.id,
+            to: socketId,
+        });
+        socket.emit("call-user", {
+            offer,
+            from: socket.id,
+            to: socketId,
+        });
     }
-  });
-  socket.on("connection", (p) => {
-    console.log("connection", p);
-  });
-  socket.on("chat message", function (msg) {
-    var item = document.createElement("li");
-    item.textContent = msg;
-    messages.appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
-  });
-  socket.on("socket.id", (clients) => {
-    messages.innerHTML = ''
-    Array.isArray(clients) && clients.forEach(({ id, name }) => {
-      var item = document.createElement("li");
-      item.textContent = name;
-      if (id != socket.id) {
-        const button = document.createElement("button");
-        button.style = "margin-left: 5px";
-        button.innerText = "CALL";
-        button.onclick = () => callUser(id);
-        item.appendChild(button);
-      } else {
-        const span = document.createElement("b");
-        span.innerText = " <本机>";
-        item.appendChild(span);
-      }
-      name && messages.appendChild(item);
-    })
+    socket.on("call-made", async (data) => {
+        //   if (getCalled) {
+        //     return;
+        //   }
+        console.log("call-made", data);
+        await peerConnection.setRemoteDescription(
+            new RTCSessionDescription(data.offer)
+        );
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(
+            new RTCSessionDescription(answer)
+        );
 
-    window.scrollTo(0, document.body.scrollHeight);
-  });
-
-  /**
-   * 建立连接
-   */
-
-  async function callUser(socketId) {
-    //   isAlreadyCalling = true;
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(
-      new RTCSessionDescription(offer)
-    );
-    console.log("callUser", {
-      offer,
-      from: socket.id,
-      to: socketId,
+        socket.emit("make-answer", {
+            answer,
+            from: socket.id,
+            to: data.socket,
+        });
+        console.log("make-answer", {
+            answer,
+            from: socket.id,
+            to: data.socket,
+        });
+        //   getCalled = true;
     });
-    socket.emit("call-user", {
-      offer,
-      from: socket.id,
-      to: socketId,
+    socket.on("answer-made", async (data) => {
+        await peerConnection.setRemoteDescription(
+            new RTCSessionDescription(data.answer)
+        );
+        console.log("answer-made", data);
+        if (!isAlreadyCalling) {
+            callUser(data.socket);
+            isAlreadyCalling = true;
+        }
     });
-  }
-  socket.on("call-made", async (data) => {
-    //   if (getCalled) {
-    //     return;
-    //   }
-    console.log("call-made", data);
-    await peerConnection.setRemoteDescription(
-      new RTCSessionDescription(data.offer)
-    );
-    const answer = await peerConnection.createAnswer();
-    await peerConnection.setLocalDescription(
-      new RTCSessionDescription(answer)
-    );
 
-    socket.emit("make-answer", {
-      answer,
-      from: socket.id,
-      to: data.socket,
-    });
-    console.log("make-answer", {
-      answer,
-      from: socket.id,
-      to: data.socket,
-    });
-    //   getCalled = true;
-  });
-  socket.on("answer-made", async (data) => {
-    await peerConnection.setRemoteDescription(
-      new RTCSessionDescription(data.answer)
+    const config = { video: false, audio: true }
+    navigator.getUserMedia(
+        config,
+        (stream) => {
+            const localVideo = document.getElementById("local-video");
+            const remoteVideo = document.getElementById("remote-video");
+            const remoteAudio = document.getElementById("remote-audio");
+            const audioTracks = stream.getAudioTracks();
+            if (config.video && localVideo) {
+                localVideo.srcObject = stream;
+            }
+            stream
+                .getTracks()
+                .forEach((track) => peerConnection.addTrack(track, stream));
+
+            peerConnection.addStream(stream);
+            peerConnection.ontrack = (e) => {
+                config.audio && !config.video && (remoteAudio.srcObject = e.streams[0])
+                config.video && (remoteVideo.srcObject = e.streams[0])
+            };
+        },
+        (error) => {
+            console.warn(error.message);
+        }
     );
-    console.log("answer-made", data);
-    if (!isAlreadyCalling) {
-      callUser(data.socket);
-      isAlreadyCalling = true;
-    }
-  });
-
-  const config = { video: true, audio: true }
-  navigator.getUserMedia(
-    config,
-    (stream) => {
-      const localVideo = document.getElementById("local-video");
-      const remoteVideo = document.getElementById("remote-video");
-      const remoteAudio = document.getElementById("remote-audio");
-      const audioTracks = stream.getAudioTracks();
-      if (config.video && localVideo) {
-        localVideo.srcObject = stream;
-      }
-      stream
-        .getTracks()
-        .forEach((track) => peerConnection.addTrack(track, stream));
-
-      peerConnection.addStream(stream);
-      peerConnection.ontrack = (e) => {
-        config.audio && !config.video && (remoteAudio.srcObject = e.streams[0])
-        config.video && (remoteVideo.srcObject = e.streams[0])
-      };
-    },
-    (error) => {
-      console.warn(error.message);
-    }
-  );
 </script>
 
 </html>

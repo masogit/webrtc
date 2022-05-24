@@ -17,12 +17,19 @@ const delClient = id => {
   clients = clients.filter(item => item.id != id)
   return clients
 }
-
 const setName = ({ id, name }) => {
   console.log('setName', { id, name }, clients)
   const _ = clients.find(item => item.id == id)
   if (_) {
     _.name = name
+  }
+}
+const setCallName = ({ id, _id }) => {
+  const self = clients.find(item => item.id == id)
+  const to = clients.find(item => item.id == _id)
+  if (self && to) {
+    self.calling = to.name
+    to.incoming = self.name
   }
 }
 
@@ -63,6 +70,7 @@ io.on("connection", (socket) => {
     });
   });
   socket.on("make-answer", (data) => {
+    setCallName({ id: data.from, to: data.from })
     socket.to(data.to).emit("answer-made", {
       socket: data.from,
       answer: data.answer,

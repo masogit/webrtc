@@ -11,7 +11,8 @@
         Helvetica, Arial, sans-serif;
     }
 
-    .videos {
+    .medias {
+      visibility: hidden;
       display: flex;
       align-items: flex-start;
     }
@@ -84,17 +85,19 @@
 
 <body>
   <form id="form" action="">
-    <input id="input" autocomplete="off" placeholder="Input your name"/><button>Connect</button>
+    <input id="input" autocomplete="off" placeholder="Input your name" /><button>Connect</button>
   </form>
   <ul id="messages"></ul>
-  <div class="videos">
+  <div class="medias">
     <video autoplay playsinline id="remote-video"></video>
     <video autoplay muted playsinline id="local-video"></video>
+    <audio autoplay playsinline id="remote-audio"></audio>
   </div>
 </body>
 <script>
+  const configuration = { 'iceServers': [{ 'urls': 'stun:stun.qq.com:3478' }] }
   const { RTCPeerConnection, RTCSessionDescription } = window;
-  const peerConnection = new RTCPeerConnection();
+  const peerConnection = new RTCPeerConnection(configuration);
   let isAlreadyCalling = false;
   let getCalled = false;
   var socket = io();
@@ -106,9 +109,8 @@
     e.preventDefault();
     if (input.value) {
       socket.emit("setName", input.value)
-      // socket.emit("chat message", `call... ${input.value}`);
-      // callUser(input.value);
-      input.value = "";
+      const medias = document.getElementsByClassName('medias')[0]
+      medias.style.visibility = 'visible'
     }
   });
   socket.on("connection", (p) => {
@@ -199,37 +201,25 @@
     }
   });
 
-  // peerConnection.addEventListener("connectionstatechange", (event) => {
-  //   console.log("connectionstatechange, ", event);
-
-  //   if (peerConnection.connectionState === "connected") {
-  //     console.log("Peers connected!");
-  //   }
-  // });
+  const config = { video: true, audio: true }
   navigator.getUserMedia(
-    { video: true, audio: true },
+    config,
     (stream) => {
       const localVideo = document.getElementById("local-video");
       const remoteVideo = document.getElementById("remote-video");
-      if (localVideo) {
+      const remoteAudio = document.getElementById("remote-audio");
+      const audioTracks = stream.getAudioTracks();
+      if (config.video && localVideo) {
         localVideo.srcObject = stream;
       }
-      // if (remoteVideo) {
-      //   remoteVideo.srcObject = stream;
-      // }
       stream
         .getTracks()
         .forEach((track) => peerConnection.addTrack(track, stream));
 
-      // peerConnection.onicecandidate = (event) => {
-      //   if (event.candidate) {
-      //     console.log("onicecandidate...", event);
-      //   }
-      // };
       peerConnection.addStream(stream);
       peerConnection.ontrack = (e) => {
-        //   console.log("ontrack...", e);
-        remoteVideo.srcObject = e.streams[0];
+        config.audio && !config.video && (remoteAudio.srcObject = e.streams[0])
+        config.video && (remoteVideo.srcObject = e.streams[0])
       };
     },
     (error) => {

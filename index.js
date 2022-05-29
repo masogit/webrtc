@@ -45,7 +45,6 @@ io.on("connection", (socket) => {
     console.log("a user connected: socket.id", socket.id);
     socket.broadcast.emit("hi");
     io.emit("socket.id", addClient(socket.id))
-    // io.emit("socket.id", addClient(socket.id));
 
     socket.on("disconnect", () => {
         io.emit("socket.id", delClient(socket.id));
@@ -55,7 +54,6 @@ io.on("connection", (socket) => {
     socket.on("setName", (name) => {
         setName({ id: socket.id, name })
         io.emit("socket.id", clients);
-        // io.emit("chat message", msg);
     });
 
     socket.on("chat message", (msg) => {

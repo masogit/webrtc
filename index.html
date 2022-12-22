@@ -200,32 +200,60 @@
             isAlreadyCalling = true;
         }
     });
-
+    const hasGetUserMedia = () => {
+        return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    }
     const config = { video: true, audio: true }
-    navigator.getUserMedia(
-        config,
-        (stream) => {
-            const localVideo = document.getElementById("local-video");
-            const remoteVideo = document.getElementById("remote-video");
-            const remoteAudio = document.getElementById("remote-audio");
-            const audioTracks = stream.getAudioTracks();
-            if (config.video && localVideo) {
-                localVideo.srcObject = stream;
-            }
-            stream
-                .getTracks()
-                .forEach((track) => peerConnection.addTrack(track, stream));
+    if (hasGetUserMedia()) {
+        // Use the getUserMedia() method
+        navigator.mediaDevices.getUserMedia(config)
+            .then((stream) => {
+                const localVideo = document.getElementById("local-video");
+                const remoteVideo = document.getElementById("remote-video");
+                const remoteAudio = document.getElementById("remote-audio");
+                const audioTracks = stream.getAudioTracks();
+                if (config.video && localVideo) {
+                    localVideo.srcObject = stream;
+                }
+                stream
+                    .getTracks()
+                    .forEach((track) => peerConnection.addTrack(track, stream));
 
-            peerConnection.addStream(stream);
-            peerConnection.ontrack = (e) => {
-                config.audio && !config.video && (remoteAudio.srcObject = e.streams[0])
-                config.video && (remoteVideo.srcObject = e.streams[0])
-            };
-        },
-        (error) => {
-            console.warn(error.message);
-        }
-    );
+                peerConnection.addStream(stream);
+                peerConnection.ontrack = (e) => {
+                    config.audio && !config.video && (remoteAudio.srcObject = e.streams[0])
+                    config.video && (remoteVideo.srcObject = e.streams[0])
+                };
+            })
+            .catch((error) => {
+                console.warn(error.message);
+            });
+    } else {
+        navigator.getUserMedia(
+            config,
+            (stream) => {
+                const localVideo = document.getElementById("local-video");
+                const remoteVideo = document.getElementById("remote-video");
+                const remoteAudio = document.getElementById("remote-audio");
+                const audioTracks = stream.getAudioTracks();
+                if (config.video && localVideo) {
+                    localVideo.srcObject = stream;
+                }
+                stream
+                    .getTracks()
+                    .forEach((track) => peerConnection.addTrack(track, stream));
+
+                peerConnection.addStream(stream);
+                peerConnection.ontrack = (e) => {
+                    config.audio && !config.video && (remoteAudio.srcObject = e.streams[0])
+                    config.video && (remoteVideo.srcObject = e.streams[0])
+                };
+            },
+            (error) => {
+                console.warn(error.message);
+            }
+        );
+    }
 </script>
 
 </html>
